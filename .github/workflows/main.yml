@@ -11,6 +11,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  PR_BRANCH: concatMD-${{ github.run_number }}
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -27,7 +30,34 @@ jobs:
       - name: Run a one-line script
         run: echo Merge
 
+      - name: make PR_BRANCH
+        if: ${{ success() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git checkout -b ${{ env.PR_BRANCH }} origin/concatMD
+          git push origin ${{ env.PR_BRANCH }}
+          git checkout ${{ github.ref }}
+
       # Concat files        
       - name: Concat document
         run: cat 01_*.md 02_*.md 03_*.md > README.md
         
+      - name: pull request
+        if: ${{ success() }}
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Update markdown
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: ${{ env.PR_BRANCH }}
+          base: concatMD
+          delete-branch: true
+          title: 'Update markdown'
+          body: |
+            Update report
+          labels: |
+            automated pr
+          draft: false
