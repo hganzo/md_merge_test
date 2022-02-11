@@ -48,12 +48,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git checkout -b ${{ env.PR_BRANCH }} main
-          git push origin ${{ env.PR_BRANCH }}
-          git checkout ${{ github.ref }}
 
       # Concat files        
       - name: Concat document
-        run: cat 01_*.md 02_*.md 03_*.md > README.md
+        run: |
+          cat 01_*.md 02_*.md 03_*.md > README.md
+          git push origin ${{ env.PR_BRANCH }}
+          git checkout ${{ github.ref }}
+          
         
       - name: pull request
         if: ${{ success() }}
